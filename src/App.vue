@@ -10,12 +10,17 @@ const showModal = ref(false)
 const selectedUser = ref<number | null>(null)
 
 const onClickAdd = () => {
-    console.log('onClickAdd')
+    if (usersStore.userCreatingId) {
+        console.warn('New record already in progress. Try to delete last one and click again')
+        return
+    }
+    usersStore.createNew()
 }
 
 const onClickDelete = (scope: UserCard) => {
-    showModal.value = true
-    selectedUser.value = scope.id
+    // showModal.value = true
+    // selectedUser.value = scope.id
+    usersStore.deleteUser(scope.id)
 }
 
 const deleteUser = () => {
@@ -30,6 +35,29 @@ const deleteUser = () => {
     usersStore.deleteUser(selectedUser.value)
     selectedUser.value = null
     showModal.value = false
+}
+
+const saveUser = (userCard: UserCard) => {
+    // Валидируем логин
+    if (userCard.login.length < 1) {
+        console.error('Login must have a value')
+        return
+    }
+
+    // Убираем пароль из поля при сохранении LDAP учетки
+    if (userCard.type === UserCardType.LDAP) {
+        userCard.password = ''
+    }
+
+    if (userCard.type === UserCardType.LOCAL && userCard.password.length < 8) {
+        console.warn('Password must be at least 8 characters long')
+    }
+
+    usersStore.commitUsers()
+
+    userCard.id === usersStore.userCreatingId
+        ? console.log(`User ${userCard.id} has been created`)
+        : console.log(`User ${userCard.id} has been updated`)
 }
 
 onMounted(() => {
@@ -78,12 +106,21 @@ onMounted(() => {
             <el-table :data="usersStore.users">
                 <el-table-column label="Метка">
                     <template #default="scope">
-                        <el-input v-model="scope.row.tags" size="large" maxlength="50" />
+                        <el-input
+                            v-model="scope.row.tags"
+                            size="large"
+                            maxlength="50"
+                            @blur="saveUser(scope.row)"
+                        />
                     </template>
                 </el-table-column>
                 <el-table-column align="center" label="Тип" width="140">
                     <template #default="scope">
-                        <el-select v-model="scope.row.type" size="large">
+                        <el-select
+                            v-model="scope.row.type"
+                            size="large"
+                            @blur="saveUser(scope.row)"
+                        >
                             <el-option
                                 v-for="t in UserCardType"
                                 :key="t"
@@ -95,18 +132,25 @@ onMounted(() => {
                 </el-table-column>
                 <el-table-column prop="login" align="center" label="Логин">
                     <template #default="scope">
-                        <el-input v-model="scope.row.login" size="large" maxlength="100" />
+                        <el-input
+                            v-model="scope.row.login"
+                            size="large"
+                            maxlength="100"
+                            @blur="saveUser(scope.row)"
+                        />
                     </template>
                 </el-table-column>
                 <el-table-column label="Пароль" align="center">
                     <template #default="scope">
                         <el-input
+                            :disabled="scope.row.type === UserCardType.LDAP"
                             v-model="scope.row.password"
                             size="large"
                             type="password"
                             show-password
                             clearable
                             maxlength="100"
+                            @blur="saveUser(scope.row)"
                         />
                     </template>
                 </el-table-column>
