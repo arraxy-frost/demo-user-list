@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { UserCardType } from '@/common/user-card.type.enum.ts'
 import { useUsersStore } from '@/stores/users.store.ts'
 import type { UserCard } from '@/types/user-card.interface.ts'
@@ -15,6 +15,11 @@ const onClickAdd = () => {
     usersStore.createNew()
 }
 
+const invalidInput = ref<{
+    id: number
+    inputName: string
+} | null>(null)
+
 const onClickDelete = (scope: UserCard) => {
     usersStore.deleteUser(scope.id)
 }
@@ -23,6 +28,16 @@ const saveUser = (userCard: UserCard) => {
     // Валидируем логин
     if (userCard.login.length < 1) {
         console.error('Login must have a value')
+
+        invalidInput.value = {
+            id: userCard.id,
+            inputName: 'login',
+        }
+
+        usersStore.userCreatingId = userCard.id;
+
+        setTimeout(() => (invalidInput.value = null), 3000)
+
         return
     }
 
@@ -33,6 +48,17 @@ const saveUser = (userCard: UserCard) => {
 
     if (userCard.type === UserCardType.LOCAL && userCard.password.length < 8) {
         console.warn('Password must be at least 8 characters long')
+
+        invalidInput.value = {
+            id: userCard.id,
+            inputName: 'password',
+        }
+
+        usersStore.userCreatingId = userCard.id;
+
+        setTimeout(() => (invalidInput.value = null), 3000)
+
+        return
     }
 
     usersStore.commitUsers()
@@ -101,7 +127,7 @@ onMounted(() => {
                         <el-select
                             v-model="scope.row.type"
                             size="large"
-                            @blur="saveUser(scope.row)"
+                            @change="saveUser(scope.row)"
                         >
                             <el-option
                                 v-for="t in UserCardType"
@@ -119,6 +145,7 @@ onMounted(() => {
                             size="large"
                             maxlength="100"
                             @blur="saveUser(scope.row)"
+                            :class="{ 'danger' : invalidInput?.inputName === 'login' && invalidInput?.id === scope.row.id }"
                         />
                     </template>
                 </el-table-column>
@@ -133,6 +160,7 @@ onMounted(() => {
                             clearable
                             maxlength="100"
                             @blur="saveUser(scope.row)"
+                            :class="{ 'danger' : invalidInput?.inputName === 'password' && invalidInput?.id === scope.row.id }"
                         />
                     </template>
                 </el-table-column>
@@ -182,5 +210,10 @@ header {
 
 main {
     padding: 24px;
+}
+
+.danger:deep(.el-input__wrapper) {
+    border: 1px solid red;
+    border-radius: 8px;
 }
 </style>
