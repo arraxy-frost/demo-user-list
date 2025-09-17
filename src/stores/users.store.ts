@@ -12,5 +12,14 @@ export const useUsersStore = defineStore('users', {
         restoreUsers() {
             this.users = JSON.parse(localStorage.getItem('users') as string)
         },
+        deleteUser(id: number) {
+            const userIndex = this.users.findIndex(user => user.id === id)
+
+            if (userIndex !== -1) {
+                this.users.splice(userIndex, 1)
+            }
+
+            this.commitUsers()
+        }
     },
 })

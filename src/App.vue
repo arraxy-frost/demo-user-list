@@ -3,17 +3,33 @@ import { Delete, Plus } from '@element-plus/icons-vue'
 import { onMounted, ref } from 'vue'
 import { UserCardType } from '@/common/user-card.type.enum.ts'
 import { useUsersStore } from '@/stores/users.store.ts'
+import type { UserCard } from '@/types/user-card.interface.ts'
 
 const usersStore = useUsersStore()
-
 const showModal = ref(false)
+const selectedUser = ref<number | null>(null)
 
 const onClickAdd = () => {
     console.log('onClickAdd')
 }
 
-const onClickDelete = () => {
+const onClickDelete = (scope: UserCard) => {
     showModal.value = true
+    selectedUser.value = scope.id
+}
+
+const deleteUser = () => {
+    if (!selectedUser.value) {
+        console.warn('Selected user id missed, deletion aborted')
+
+        showModal.value = false
+
+        return
+    }
+
+    usersStore.deleteUser(selectedUser.value)
+    selectedUser.value = null
+    showModal.value = false
 }
 
 onMounted(() => {
@@ -119,8 +135,7 @@ onMounted(() => {
             </el-table>
             <el-dialog v-model="showModal" width="500px">
                 Вы действительно хотите удалить запись?
-                <el-button type="primary"> Да </el-button>
-                <el-button type="danger"> Yes </el-button>
+                <el-button type="primary" @click="deleteUser"> Да </el-button>
             </el-dialog>
         </el-main>
     </el-container>
