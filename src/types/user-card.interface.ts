@@ -1,6 +1,6 @@
 import type { UserCardType } from '@/common/user-card.type.enum.ts'
 
-export interface UserCardInterface {
+export interface UserCard {
     tags: string;
     type: UserCardType;
     login: string;

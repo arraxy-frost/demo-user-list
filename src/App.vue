@@ -1,26 +1,37 @@
 <script setup lang="ts">
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { UserCardType } from '@/common/user-card.type.enum.ts'
+import { useUsersStore } from '@/stores/users.store.ts'
 
-const users = ref([
-    { tags: 'admin;scoped;', type: 'local', login: 'admin', password: 'password' },
-    { tags: 'dev;', type: 'ldap', login: 'ivan', password: 'password' },
-    { tags: 'tag;', type: 'local', login: 'test', password: 'password' },
-])
+const usersStore = useUsersStore()
+
+const showModal = ref(false)
 
 const onClickAdd = () => {
     console.log('onClickAdd')
 }
 
-const onClickDelete = (id: any) => {
-    console.log('onClickDelete:', id)
+const onClickDelete = () => {
+    showModal.value = true
 }
+
+onMounted(() => {
+    usersStore.restoreUsers()
+})
 </script>
 
 <template>
     <el-container>
-        <el-header style="display: flex; flex-direction: column; gap: 16px; height: fit-content; padding-bottom: 0;">
+        <el-header
+            style="
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                height: fit-content;
+                padding-bottom: 0;
+            "
+        >
             <div
                 style="
                     display: flex;
@@ -47,8 +58,8 @@ const onClickDelete = (id: any) => {
                 Для указания нескольких меток для одной пары логин/пароль используйте разделитель ;
             </div>
         </el-header>
-        <el-main style="padding-top: 8px;">
-            <el-table :data="users" >
+        <el-main style="padding-top: 8px">
+            <el-table :data="usersStore.users">
                 <el-table-column label="Метка">
                     <template #default="scope">
                         <el-input v-model="scope.row.tags" size="large" maxlength="50" />
@@ -106,6 +117,11 @@ const onClickDelete = (id: any) => {
                     </template>
                 </el-table-column>
             </el-table>
+            <el-dialog v-model="showModal" width="500px">
+                Вы действительно хотите удалить запись?
+                <el-button type="primary"> Да </el-button>
+                <el-button type="danger"> Yes </el-button>
+            </el-dialog>
         </el-main>
     </el-container>
 </template>
